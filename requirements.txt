@@ -1,0 +1,18 @@
+Project requirements for Online Complaint Management System
+
+Runtime requirements:
+- Node.js 20+
+- npm
+- MongoDB Atlas access
+- Groq API key
+
+Environment variables:
+- MONGO_URI
+- GROQ_API_KEY
+
+Application stack:
+- Next.js App Router
+- React
+- mongoose
+- OpenAI Node SDK configured for Groq
+- Tailwind CSS
