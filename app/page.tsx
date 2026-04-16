@@ -12,6 +12,7 @@ type Complaint = {
 
 export default function Home() {
   const [text, setText] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingComplaints, setIsLoadingComplaints] = useState(true);
   const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -62,12 +63,16 @@ export default function Home() {
       setMessage("");
       setMessageType("");
 
+      const formData = new FormData();
+      formData.append("text", trimmedText);
+
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
       const response = await fetch("/api/complaints", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text: trimmedText }),
+        body: formData,
       });
 
       const data = await response.json();
@@ -77,6 +82,7 @@ export default function Home() {
       }
 
       setText("");
+  setImageFile(null);
       setMessageType("success");
       setMessage("Complaint submitted successfully.");
       await loadComplaints();
@@ -118,6 +124,26 @@ export default function Home() {
               className="min-h-40 w-full rounded-2xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-sm outline-none transition focus:border-zinc-900 focus:bg-white"
               disabled={isSubmitting}
             />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="image" className="text-sm font-medium text-zinc-700">
+              Complaint image
+            </label>
+            <input
+              id="image"
+              type="file"
+              accept="image/*"
+              onChange={(event) => {
+                const selectedFile = event.target.files?.[0] || null;
+                setImageFile(selectedFile);
+              }}
+              className="block w-full rounded-2xl border border-zinc-300 bg-zinc-50 px-4 py-3 text-sm text-zinc-700 file:mr-4 file:rounded-full file:border-0 file:bg-zinc-900 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isSubmitting}
+            />
+            {imageFile ? (
+              <p className="text-xs text-zinc-500">Selected: {imageFile.name}</p>
+            ) : null}
           </div>
 
           {message ? (

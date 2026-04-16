@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/dbConnect";
 import { categorizeComplaint } from "@/lib/ai";
+import { uploadImageToS3 } from "@/lib/s3";
 import { Complaint } from "@/models/Complaint";
 
 function resolvePriority(totalComplaints) {
@@ -17,9 +18,30 @@ function resolvePriority(totalComplaints) {
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    const text = body?.text?.trim();
-    const imageUrl = body?.imageUrl?.trim() || "";
+    const contentType = request.headers.get("content-type") || "";
+    let text = "";
+    let imageUrl = "";
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await request.formData();
+      const textValue = formData.get("text");
+      const imageFile = formData.get("image");
+
+      text = typeof textValue === "string" ? textValue.trim() : "";
+
+      if (imageFile instanceof File && imageFile.size > 0) {
+        const fileBuffer = Buffer.from(await imageFile.arrayBuffer());
+        imageUrl = await uploadImageToS3(
+          fileBuffer,
+          imageFile.type,
+          imageFile.name
+        );
+      }
+    } else {
+      const body = await request.json();
+      text = body?.text?.trim();
+      imageUrl = body?.imageUrl?.trim() || "";
+    }
 
     if (!text) {
       return NextResponse.json(
